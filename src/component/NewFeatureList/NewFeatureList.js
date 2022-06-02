@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import 'boxicons'
 import { useNavigate } from 'react-router-dom';
 import NewFeatureService from '../NewFeatureService/NewFeatureService';
+import { userContext } from '../../App';
 
 
 export const expenseContext = createContext();
@@ -11,7 +12,7 @@ const NewFeatureList = (props) => {
     const [totalSavingsInMoney, setTotalSavingsInMoney] = useState(0);
     const [totalSavingsInGold, setTotalSavingsInGold] = useState(0);
     const [savingsGoldPriceInMoney, setSavingsGoldPriceInMoney] = useState(0);
-
+    const [user, setUser] = useContext(userContext)
     const m = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
     useEffect(() => {
         getExpense();
@@ -19,7 +20,8 @@ const NewFeatureList = (props) => {
     }, [trans])
     const getExpense = async () => {
         const data = await NewFeatureService.getAllExpense();
-        setTrans(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })))
+        const filterData = data.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+        setTrans(filterData.filter(item => item.email === user.email))
     }
     // const logout = () =>{
     //     navigate('/')
@@ -33,8 +35,8 @@ const NewFeatureList = (props) => {
             SavingsGold += parseFloat(item.SavingsGold);
         })
         console.log(trans);
-        const CurrentGoldPrice = trans.find(item => item.Month.toLowerCase() === m[new Date().getMonth() + 1])
-
+        const CurrentGoldPrice = trans.find(item => item.Month.toLowerCase() === m[new Date().getMonth()])
+        console.log(m[new Date().getMonth() + 1])
         const SavingsGoldPriceInMoney = SavingsGold * parseFloat(CurrentGoldPrice.GoldPrice)
         console.log(SavingsGold, SavingsMoney, SavingsGoldPriceInMoney, SavingsGoldPriceInMoney - SavingsMoney);
         setTotalSavingsInMoney(SavingsMoney);
@@ -61,19 +63,19 @@ const NewFeatureList = (props) => {
             <button className="border py-2 text-white bg-red-500 w-full" onClick={calculate}>Calculate Difference Between Savings in Money and Savings in Gold </button>
             <div className='item flex justify-content-between m-6 bg-gray-50 py-2 rounded-r'>
                 <span className='w-48'>Total Savings in Money</span>
-                <span className='w-96'>{totalSavingsInMoney}</span>
+                <span className='w-96'>{totalSavingsInMoney} Taka</span>
             </div>
             <div className='item flex justify-content-between m-6 bg-gray-50 py-2 rounded-r'>
                 <span className='w-48'>Total Savings in Gold</span>
-                <span className='w-96'>{totalSavingsInGold}</span>
+                <span className='w-96'>{totalSavingsInGold} Gram</span>
             </div>
             <div className='item flex justify-content-between m-6 bg-gray-50 py-2 rounded-r'>
                 <span className='w-48'>Total Current Price of Saved Gold</span>
-                <span className='w-96'>{savingsGoldPriceInMoney}</span>
+                <span className='w-96'>{savingsGoldPriceInMoney} Taka</span>
             </div>
             <div className='item flex justify-content-between m-6 bg-gray-50 py-2 rounded-r'>
                 <span className='w-48'>Difference Between Saved Gold Price and Saved Money</span>
-                <span className='w-96'>{savingsGoldPriceInMoney - totalSavingsInMoney}</span>
+                <span className='w-96'>{savingsGoldPriceInMoney - totalSavingsInMoney} Taka</span>
             </div>
 
         </div>
@@ -86,7 +88,8 @@ function Transaction({ item }) {
     const delete_item = async (id) => {
         console.log(id);
         try {
-            await NewFeatureList.deleteExpense(id);
+            await NewFeatureService.deleteExpense(id);
+
             setTrans(trans.filter(product => product.id !== id))
 
         }
